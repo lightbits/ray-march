@@ -1,0 +1,10 @@
+*.sdf
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.opensdf
+*.v11.suo
+bin
+ipch
+obj
