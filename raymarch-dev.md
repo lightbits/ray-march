@@ -1,12 +1,36 @@
-Goals
-====
-*	Rough raymarching algorithm (CPU)
-Draw a circle
-*	Transformations
-Draw a cube
-*	Render with z-buffer
-*	Point light illumination
-*	Move algorithm to fragment shader, use OpenGL to display results
+Raymarching Distance Fields Development Description
+============================================
+
+Contents
+--------
+
+*	The raymarching algorithm
+*	Orthographic scene
+*	Transformations and perspective projection
+*	Shading
+*	Displaying the results
+*	Resources
+
+The raymarching algorithm
+-------------------------
+The raymarching algorithm being used is inspired by the work of Inigo Quilez in the demoscene.
+The algorithm can be formulated as such:
+
+Problem: For each pixel in the result image, we wish to cast a ray into the world and find the closest surface intersection.
+
+Solution: Instead of analytically solving the raycasting problem, we look for an approximation.
+First, we define our scene using distance functions that, for any given point in the world, return the
+closest distance from the point to a surface.
+
+For example, the (signed) distance function for a sphere centered at the origin would be:
+```c
+float sdSphere(vec3 p, float radius) {
+	return length(p) - radius;
+}
+```
+The distance function for the composed scene will then be the minimum of all the individual distance functions.
+
+To solve for intersection, we march along the ray in variable steps. That is: for any point along the ray, we find the smallest distance to any surface in the scene and step forward this distance. Repeat until the distance is below a given epsilon. This way we can speed up the raymarching, and prevent missing surfaces
 
 Context creation: GLFW 3.0.2
 *	http://www.glfw.org/docs/3.0/quick.html
