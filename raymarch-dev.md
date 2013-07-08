@@ -3,7 +3,6 @@ Raymarching Distance Fields Development Description
 
 Contents
 --------
-
 *	The raymarching algorithm
 *	Orthographic scene
 *	Transformations and perspective projection
