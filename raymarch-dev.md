@@ -5,7 +5,7 @@ Contents
 --------
 *	The raymarching algorithm
 *	Orthographic scene
-*	Transformations and perspective projection
+*	Transformations and perspective
 *	Shading
 *	Displaying the results
 *	Resources
@@ -19,7 +19,7 @@ The algorithm can be formulated as such:
 For each pixel in the result image, we wish to cast a ray into the world and find the closest surface intersection.
 
 ###Solution:###
-Instead of analytically solving the raycasting problem, we look for an approximation.
+Instead of analytically solving the ray intersection problem, we look for an approximation.
 First, we define our scene using distance functions that, for any given point in the world, return the
 closest distance from the point to a surface.
 
@@ -35,11 +35,23 @@ To solve for intersection, we march along the ray in variable steps. That is: fo
 
 Displaing the results
 ---------------------
-(The project is currently in draft mode, and uses SFML to render onto a color buffer using the CPU).
-
 Using OpenGL we create a quadrilateral and a texture to be rendered onto that quad.
 This allows us to render at a resolution lower than the window and simply scale the quad in the vertex shader.
 The raymarching algorithm will be implemented in the fragment shader.
+
+Perspective
+-----------
+An advantage of ray-casting-based rendering approaches is that changing from an orthographic view to a
+perspective view does not change the behaviour of the rays.
+
+A perspective view can be modeled by positioning the eye somewhere in the world, and defining the orientation
+of the image plane and the distance from the eye to the plane.
+
+We define the orientation of the image plane using a right-vector and an up-vector. The crossproduct of these
+gives us the forward-vector. If we wanted an orthographic view, all the rays would be cast parallell to this direction.
+
+Image plane position = s = eye + focalLength * (right x up) + u * right + v * up
+Ray direction = d = normalize(s - eye) = focalLength * (right x up) + u * right + v * up
 
 Dependencies
 ------------
