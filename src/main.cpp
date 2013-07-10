@@ -14,19 +14,20 @@ vec3 g_camForward	= cross(g_camRight, g_camUp);			// The forward-vector of the i
 vec3 g_eye			= vec3(0.0f, 0.0f, -2.0f);				// The eye position in the world
 float g_focalLength = 1.2f;									// Distance between eye and image-plane
 float g_zNear		= 0.0f;									// Near plane distance from camera
-float g_zFar		= 25.0f;									// Far plane distance from camera
+float g_zFar		= 15.0f;								// Far plane distance from camera
 float g_moveSpeed	= 0.1f;
 
 // Raymarch parameters
-int g_rmSteps		= 64;
+int g_rmSteps		= 32;
 float g_rmEpsilon	= 0.001f;
 
 // Scene
-vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.0f, 0.0f, 0.0f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
+vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
 vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
-vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
+//vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
+vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
 
 const int g_windowWidth = 480;
 const int g_windowHeight = 480;
@@ -144,7 +145,7 @@ int main()
 	glUniform1i(g_rmStepsLoc,		g_rmSteps);
 
 	double renderTime = 0.0;
-	double targetFrameTime = 1.0 / 30.0; // 33ms ~= 30fps
+	double targetFrameTime = 1.0 / 10.0;
 	while(glfwGetWindowParam(GLFW_OPENED) == GL_TRUE)
 	{
 		if(glfwGetKey(GLFW_KEY_ESC))

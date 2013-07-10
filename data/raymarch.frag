@@ -77,32 +77,10 @@ float opSubtract(float d0, float d1)
 
 float distScene(vec3 p)
 {
-	//float dx0 = sdSphere(p - vec3(0.0f, 0.2f, 0.0f), 0.6f);
-	//float dx1 = udBox(p, vec3(0.55f, 0.55f, 0.55f));
-	 
-	//float d1 = opSubtract(dx1, dx0);
-	//float d2 = udXyPlane(p, -0.55f);
-	//float d3 = udBox(p - vec3(0.0f, 0.0f, 3.0f), vec3(100.0f, 0.5f, 2.0f));
-	 
-	//return min(d1, min(d2, d3));
-
-	//p.xyz = mod((p.xyz), 1.0f) - vec3(0.5f);
-	//float d1 = sdBox(p, vec3(0.15f));
-	//float d2 = sdSphere(p, 0.3f);
-	//return min(d1, d2);
-
-	//float dx0 = sdSphere(p - vec3(0.2f, 0.3f, -0.2f), 0.5f);
-	//float dx1 = sdBox(p, vec3(0.5f));
-	//float d1 = max(dx1, -dx0);
-	//float d2 = p.y - (-0.5f);
-	//return min(d1, d2);
-
-	float d1 = sdBox(p, vec3(0.5f));
-	float d2 = sdBox(p - vec3(1.1f, 0.0f, 0.0f), vec3(0.5f));
-	float d3 = sdBox(p - vec3(2.2f, 0.0f, 0.0f), vec3(0.5f));
-	float d4 = p.y + 0.5f;
-
-	return min(d1, min(d2, min(d3, d4)));
+	float d1 = p.y + 0.5f;
+	float d2 = sdSphere(p, 0.5f);
+	float d3 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.45f));
+	return min(d1, min(d2, d3));
 }
 
 void raymarch(vec3 ro, vec3 rd, out int i, out vec3 p, out float t)
@@ -119,55 +97,57 @@ void raymarch(vec3 ro, vec3 rd, out int i, out vec3 p, out float t)
 	}
 }
 
-bool obstructed(vec3 from, vec3 to, float radius)
+// Returns a value between [0, 1] depending on how visible p0 is from p1
+float visibility(vec3 p0, vec3 p1, float k)
 {
-	vec3 direction = normalize(to - from);
-
-	// We offset the start point to avoid intersecting with the surface we start from
-	vec3 p = from + direction * 10.0f * g_rmEpsilon;
-	for(int i = 0; i < g_rmSteps; ++i)
+	vec3 rd = normalize(p1 - p0);
+	float t = 10.0f * g_rmEpsilon;
+	float maxt = length(p1 - p0);
+	float f = 1.0f;
+	while(t < maxt)
 	{
-		float dt = length(to - p);
-		float d = min(distScene(p), dt);
-		p += direction * d;
+		float d = distScene(p0 + rd * t);
 
-		if(dt < radius)
-			return false;
-
+		// A surface was hit before we reached p1
 		if(d < g_rmEpsilon)
-			return true;
+			return 0.0f;
+
+		// Penumbra factor
+		f = min(f, k * d / t);
+
+		t += d;
 	}
 
-	// Assuming we could not reach the point
-	return true;
+	return f;
 }
 
-// Approximates the gradient of the distance function at the given point.
-// If p is near a surface, the function will approximate the surface normal
-// (the distance varies the most when moving normally away from the surface)
+// Approximates the (normalized) gradient of the distance function at the given point.
+// If p is near a surface, the function will approximate the surface normal.
 vec3 gradient(vec3 p)
 {
-	vec2 ep = vec2(0.0001f, 0.0f);
-	float f0 = distScene(p);
+	float h = 0.0001f;
 
+	//vec2 ep = vec2(0.0001f, 0.0f);
 	//return normalize(vec3(
-	//	(distScene(p + ep.xyy) - f0) / ep.x,
-	//	(distScene(p + ep.yxy) - f0) / ep.x,
-	//	(distScene(p + ep.yyx) - f0) / ep.x));
+	//	distScene(p + ep.xyy) - distScene(p - ep.xyy),
+	//	distScene(p + ep.yxy) - distScene(p - ep.yxy),
+	//	distScene(p + ep.yyx) - distScene(p - ep.yyx)));
+
 	return normalize(vec3(
-		(distScene(p + ep.xyy) - distScene(p - ep.xyy)) / (2.0f * ep.x),
-		(distScene(p + ep.yxy) - distScene(p - ep.yxy)) / (2.0f * ep.x),
-		(distScene(p + ep.yyx) - distScene(p - ep.yyx)) / (2.0f * ep.x)));
+		distScene(p + vec3(h,0,0)) - distScene(p - vec3(h,0,0)),
+		distScene(p + vec3(0,h,0)) - distScene(p - vec3(0,h,0)),
+		distScene(p + vec3(0,0,h)) - distScene(p - vec3(0,0,h))));
 }
 
 vec4 diffuseS(vec3 p, vec3 lightPos, vec4 lightColor)
 {
 	float intensity = 0.0f;
-	if(!obstructed(p, lightPos, 0.1f))
+	float vis = visibility(p, lightPos, 16);
+	if(vis > 0.0f)
 	{
 		vec3 surfaceNormal = gradient(p);
 		vec3 lightDirection = normalize(lightPos - p);
-		intensity = clamp(dot(surfaceNormal, lightDirection), 0, 1);
+		intensity = clamp(dot(surfaceNormal, lightDirection), 0, 1) * vis;
 	}
 
 	return lightColor * intensity + g_ambient * (1.0f - intensity);
@@ -180,11 +160,25 @@ vec4 diffuseNS(vec3 p, vec3 lightPos, vec4 lightColor)
 	return lightColor * intensity + g_ambient * (1.0f - intensity);
 }
 
-void main()
+// Returns a value between 0 and 1, where 0 means the surface point is not occluded
+// and 1 means the point is completely occluded.
+float ambientOcclusion(vec3 p, vec3 n)
 {
-	vec3 ro = g_eye;
-	vec3 rd = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * uv.y);
+	float stepSize = 0.01f;
+	float t = stepSize;
+	float oc = 0.0f;
+	for(int i = 0; i < 10; ++i)
+	{
+		float d = distScene(p + n * t);
+		oc += t - d; // Actual distance to surface - distance field value
+		t += stepSize;
+	}
 
+	return clamp(oc, 0, 1);
+}
+
+vec4 getColor(vec3 ro, vec3 rd)
+{
 	vec3 p;
 	float t;
 	int i;
@@ -205,11 +199,37 @@ void main()
 		color = (diffuseS(p, g_light0Position, g_light0Color) + diffuseS(p, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))) * 0.5f;
 
 		// Color based on surface gradient
+		//color = vec4(clamp(gradient(p), 0, 1).xyz, 1.0f); // Only upward pointing normals
 		//color = vec4(abs(gradient(p)).xyz, 1.0f);
 
+		// Color based on ambient occlusion
+		vec3 normal = gradient(p);
+		float ao = ambientOcclusion(p, normal);
+		color = color * (1.0f - ao);
+
 		// Blend the background color based on the distance from the camera
-		color = mix(g_skyColor, color, 3.0f * z * z - 2.0f * z * z * z); // Fog
+		float zSqrd = z * z;
+		color = mix(g_skyColor, color, zSqrd * (3.0f - 2.0f * z)); // Fog
 	}
+
+	return color;
+}
+
+void main()
+{
+	float imgWidth = 480.0f;
+	float imgHeight = 480.0f;
+	float hpw = 1.0f / (2 * imgWidth);
+	float hph = 1.0f / (2 * imgHeight);
+	vec3 ro = g_eye;
+	vec3 rd = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * uv.y);
+	vec4 color = getColor(ro, rd);
+	//vec3 rd1 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) + g_camUp * (uv.y - hph));
+	//vec3 rd2 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) + g_camUp * (uv.y - hph));
+	//vec3 rd3 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) + g_camUp * (uv.y + hph));
+	//vec3 rd4 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) + g_camUp * (uv.y + hph));
+
+	//vec4 color = (getColor(ro, rd1) + getColor(ro, rd2) + getColor(ro, rd3) + getColor(ro, rd4)) / 4.0f;
 
 	outColor = vec4(color.xyz, 1.0f);
 }

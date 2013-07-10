@@ -75,16 +75,9 @@ GLuint createProgram(GLuint vertexShader, GLuint fragmentShader, GLuint geometry
 {
 	GLuint program = glCreateProgram();
 
-	std::vector<GLuint> shaders;
-	if(vertexShader != 0)
-		shaders.push_back(vertexShader);
-	if(fragmentShader != 0)
-		shaders.push_back(fragmentShader);
-	if(geometryShader != 0)
-		shaders.push_back(geometryShader);
-
-	for(unsigned int i = 0; i < shaders.size(); ++i)
-		glAttachShader(program, shaders[i]);
+	if(vertexShader != 0) glAttachShader(program, vertexShader);
+	if(fragmentShader != 0) glAttachShader(program, fragmentShader);
+	if(geometryShader != 0) glAttachShader(program, geometryShader);
 
 	glLinkProgram(program);
 
@@ -102,8 +95,9 @@ GLuint createProgram(GLuint vertexShader, GLuint fragmentShader, GLuint geometry
 		delete[] strInfoLog;
 	}
 
-	for(unsigned int i = 0; i < shaders.size(); ++i)
-		glDetachShader(program, shaders[i]);
+	if(vertexShader != 0) glDetachShader(program, vertexShader);
+	if(fragmentShader != 0) glDetachShader(program, fragmentShader);
+	if(geometryShader != 0) glDetachShader(program, geometryShader);
 
 	return program;
 }
