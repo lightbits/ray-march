@@ -15,10 +15,12 @@ Content
 * Rendering techniques
  * Ambient occlusion
  * Lighting
+ * Shadows
  * Anti aliasing
+ * Fog
+ * Reflections
  * Colors and textures
-* Fractals
- * Kaleidoscopic IFS
+* Interesting applications
 * Code + documentation
 * References
 
@@ -58,6 +60,7 @@ These are my main resources while working with this project. I strongly recommen
 
 * [Inigo Quilez: *Raymarching Distance Fields*](http://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm)
 * [Inigo Quilez: *Modeling with Distance Functions*](http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
+* [Inigo Quilez: *Free Penumbra Shadows for Raymarching Distance Fields*](http://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm)
 * [hvidtfeldts: *Distance Estimated 3D Fractals*](http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/)
 * [John C. Hart: *Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces* (1994)](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.3825)
 * [fractalforums: *Kaleidoscopic (escape time) IFS*](http://www.fractalforums.com/ifs-iterated-function-systems/kaleidoscopic-(escape-time-ifs)/)

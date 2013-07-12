@@ -127,8 +127,8 @@ float sierpinski3(float x, float y, float z)
 
 float distScene(vec3 p)
 {
-	//float d1 = p.y + 0.5f;
-	float d1 = sdBox(p - vec3(0.0f, -1.0f, 0.0f), vec3(2.0f, 0.5f, 2.0f));
+	float d1 = p.y + 0.5f;
+	//float d1 = sdBox(p - vec3(0.0f, -1.0f, 0.0f), vec3(2.0f, 0.5f, 2.0f));
 	float d2 = sdSphere(p, 0.5f);
 	float d3 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.45f));
 	return min(d1, min(d2, d3));
@@ -248,7 +248,7 @@ vec4 getColor(vec3 ro, vec3 rd)
 		color = z < 0.0f || z > 1.0f ? g_skyColor : vec4(1.0f) * z;
 
 		// Diffuse lighting
-		//color = (diffuseS(p, g_light0Position, g_light0Color) + diffuseS(p, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))) * 0.5f;
+		color = (diffuseS(p, g_light0Position, g_light0Color) + diffuseS(p, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))) * 0.5f;
 
 		// Color based on surface gradient
 		//color = vec4(clamp(gradient(p), 0, 1).xyz, 1.0f); // Only upward pointing normals
@@ -276,11 +276,11 @@ void main()
 	vec3 ro = g_eye;
 	vec3 rd = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * uv.y);
 	vec4 color = getColor(ro, rd);
-	//vec3 rd1 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) + g_camUp * (uv.y - hph));
-	//vec3 rd2 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) + g_camUp * (uv.y - hph));
-	//vec3 rd3 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) + g_camUp * (uv.y + hph));
-	//vec3 rd4 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) + g_camUp * (uv.y + hph));
 
+	//vec3 rd1 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) * g_aspectRatio + g_camUp * (uv.y - hph));
+	//vec3 rd2 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) * g_aspectRatio + g_camUp * (uv.y - hph));
+	//vec3 rd3 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) * g_aspectRatio + g_camUp * (uv.y + hph));
+	//vec3 rd4 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) * g_aspectRatio + g_camUp * (uv.y + hph));
 	//vec4 color = (getColor(ro, rd1) + getColor(ro, rd2) + getColor(ro, rd3) + getColor(ro, rd4)) / 4.0f;
 
 	outColor = vec4(color.xyz, 1.0f);

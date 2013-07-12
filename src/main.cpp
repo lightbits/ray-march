@@ -23,9 +23,9 @@ float g_rmEpsilon	= 0.0005f;
 
 // Scene
 //vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.8f, 0.8f, 0.8f, 1.0f);
-vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.95f, 0.95f, 0.95f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
+vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
 vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
 //vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
@@ -165,9 +165,9 @@ int main()
 
 		updateCamera();
 
-		g_camUp = vec3(0.151938f, 0.955337f, 0.25347f);
-		g_camRight = vec3(0.87709f, 0, -0.514136f);
-		g_eye = vec3(-0.8f, 0.793f, -2.12f);
+		g_camUp = vec3(0.21f, 0.91f, 0.347f);
+		g_camRight = vec3(0.85f, 0, -0.52f);
+		g_eye = vec3(-0.42f, 0.73f, -1.35f);
 		g_camForward = cross(g_camRight, g_camUp);
 
 		double renderStart = glfwGetTime();
