@@ -12,25 +12,27 @@ vec3 g_camUp		= normalize(vec3(0.0f, 1.0f, 0.0f));	// The upward-vector of the i
 vec3 g_camRight		= normalize(vec3(1.0f, 0.0f, 0.0f));	// The right-vector of the image plane
 vec3 g_camForward	= cross(g_camRight, g_camUp);			// The forward-vector of the image plane
 vec3 g_eye			= vec3(0.0f, 0.0f, -2.0f);				// The eye position in the world
-float g_focalLength = 1.2f;									// Distance between eye and image-plane
+float g_focalLength = 1.67f;									// Distance between eye and image-plane
 float g_zNear		= 0.0f;									// Near plane distance from camera
-float g_zFar		= 15.0f;								// Far plane distance from camera
+float g_zFar		= 25.0f;								// Far plane distance from camera
 float g_moveSpeed	= 0.1f;
 
 // Raymarch parameters
-int g_rmSteps		= 32;
-float g_rmEpsilon	= 0.001f;
+int g_rmSteps		= 512;
+float g_rmEpsilon	= 0.0005f;
 
 // Scene
 //vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
-vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.8f, 0.8f, 0.8f, 1.0f);
+vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
 vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
 //vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
 vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
 
-const int g_windowWidth = 480;
-const int g_windowHeight = 480;
+const int g_windowWidth = 320;
+const int g_windowHeight = 200;
 float g_aspectRatio = g_windowWidth / (float)g_windowHeight;
 
 void updateCamera()
@@ -84,6 +86,12 @@ void updateCamera()
 	g_camForward = vec3(cosphi * sintheta, -sinphi, cosphi * costheta);
 	g_camRight = vec3(costheta, 0.0f, -sintheta);
 	g_camUp = normalize(cross(g_camForward, g_camRight));
+}
+
+std::ostream &operator<<(std::ostream &out, const vec3 &v)
+{
+	out<<"("<<v.x<<" "<<v.y<<" "<<v.z<<")";
+	return out;
 }
 
 int main()
@@ -145,13 +153,22 @@ int main()
 	glUniform1i(g_rmStepsLoc,		g_rmSteps);
 
 	double renderTime = 0.0;
-	double targetFrameTime = 1.0 / 10.0;
+	double targetFrameTime = 1.0 / 30.0;
 	while(glfwGetWindowParam(GLFW_OPENED) == GL_TRUE)
 	{
 		if(glfwGetKey(GLFW_KEY_ESC))
 			glfwCloseWindow();
+		else if(glfwGetKey('R'))
+		{
+			std::cout<<g_camUp<<'\n'<<g_camRight<<'\n'<<g_eye<<'\n';
+		}
 
 		updateCamera();
+
+		g_camUp = vec3(0.151938f, 0.955337f, 0.25347f);
+		g_camRight = vec3(0.87709f, 0, -0.514136f);
+		g_eye = vec3(-0.8f, 0.793f, -2.12f);
+		g_camForward = cross(g_camRight, g_camUp);
 
 		double renderStart = glfwGetTime();
 		glClearColor(0, 0, 0, 0);

@@ -56,12 +56,19 @@ float sdBox(vec3 p, vec3 size)
 	return min(max(d.x, max(d.y, d.z)), 0.0f) + udBox(p, size);
 }
 
-float sdCross(vec3 p, float s)
+float sdCylinderY(vec3 p, float r, float h)
 {
-	float da = sdBox(p.xyz, vec3(inf, s, s));
-	float db = sdBox(p.yzx, vec3(s, inf, s));
-	float dc = sdBox(p.zxy, vec3(s, s, inf));
-	return min(da, min(db, dc));
+	return max(length(p.xz) - r, abs(p.y) - h);
+}
+
+float sdHemiTop(vec3 p, float r)
+{
+	return max(length(p) - r, -p.y);
+}
+
+float sdHemiBottom(vec3 p, float r)
+{
+	return max(length(p) - r, p.y);
 }
 
 float udXyPlane(vec3 p, float y)
@@ -75,9 +82,53 @@ float opSubtract(float d0, float d1)
 	return max(d0, -d1);
 }
 
+void rotate1(inout float x, inout float y, inout float z)
+{
+	const float cost = cos(0.9f);
+	const float sint = sin(0.9f);
+	float y1 = y * cost - z * sint;
+	float z1 = y * sint + z * cost;
+	y = y1; z = z1;
+}
+
+void rotate2(inout float x, inout float y, inout float z)
+{
+	const float cost = cos(0.6f);
+	const float sint = sin(0.6f);
+	float y1 = y * cost - z * sint;
+	float z1 = y * sint + z * cost;
+	y = y1; z = z1;
+}
+
+float sierpinski3(float x, float y, float z)
+{
+	vec3 C = vec3(0.60f, 0.3, 0.70f);
+	float scale = 2.0f;
+	int bailout = 100;
+	float r = x * x + y * y + z * z;
+	int i = 0;
+	while(i < 10 && r < bailout)
+	{
+		rotate1(x, y, z);
+		if(x + y < 0) { float x1 = -y; y = -x; x = x1; }
+		if(x + z < 0) { float x1 = -z; z = -x; x = x1; }
+		if(y + z < 0) { float y1 = -z; z = -y; y = y1; }
+
+		rotate2(x, y, z);
+		x = scale * x - C.x * (scale - 1);
+		y = scale * y - C.y * (scale - 1);
+		z = scale * z - C.z * (scale - 1);
+		r = x * x + y * y + z * z;
+		++i;
+	}
+
+	return (sqrt(r) - 2) * pow(scale, -i);
+}
+
 float distScene(vec3 p)
 {
-	float d1 = p.y + 0.5f;
+	//float d1 = p.y + 0.5f;
+	float d1 = sdBox(p - vec3(0.0f, -1.0f, 0.0f), vec3(2.0f, 0.5f, 2.0f));
 	float d2 = sdSphere(p, 0.5f);
 	float d3 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.45f));
 	return min(d1, min(d2, d3));
@@ -91,7 +142,8 @@ void raymarch(vec3 ro, vec3 rd, out int i, out vec3 p, out float t)
 	{
 		p = ro + rd * t;
 		float dist = distScene(p);
-		if(dist < g_rmEpsilon * t || t > g_zFar)
+		// We make epsilon proportional to t so that we drop accuracy the further into the scene we get
+		if(dist < g_rmEpsilon * t * 2.0f || t > g_zFar)
 			break;
 		t += dist;
 	}
@@ -193,10 +245,10 @@ vec4 getColor(vec3 ro, vec3 rd)
 		float z = mapTo(t, g_zNear, g_zFar, 1, 0);
 
 		// Color depth relative to eye
-		//color = z < 0.0f || z > 1.0f ? g_skyColor : vec4(1.0f) * z;
+		color = z < 0.0f || z > 1.0f ? g_skyColor : vec4(1.0f) * z;
 
 		// Diffuse lighting
-		color = (diffuseS(p, g_light0Position, g_light0Color) + diffuseS(p, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))) * 0.5f;
+		//color = (diffuseS(p, g_light0Position, g_light0Color) + diffuseS(p, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))) * 0.5f;
 
 		// Color based on surface gradient
 		//color = vec4(clamp(gradient(p), 0, 1).xyz, 1.0f); // Only upward pointing normals

@@ -1,0 +1,69 @@
+Raymarching Distance Fields
+===========================
+
+Hello. This is my first article in a series of many, where I dive deep into an interesting algorithm and investigate what it can be used for, and (hopefully) end up with something nice to show in the end. For each of the projects my target result is a technical writeup like this, and either an interactive demo or some cool visuals. All code will be uploaded to Github, with full documentation.
+
+For this article I will write about the rendering technique known in the demoscene as **raymarching with distance fields**, capable of producing photo-realistic and super-complex images in realtime!
+
+![Iñigo Quilez' slisesix](http://www.iquilezles.org/www/material/nvscene2008/gfx00.jpg)
+
+Content
+----------
+* Introduction
+* The raymarching algorithm
+* Distance estimators
+* Rendering techniques
+ * Ambient occlusion
+ * Lighting
+ * Anti aliasing
+ * Colors and textures
+* Fractals
+ * Kaleidoscopic IFS
+* Code + documentation
+* References
+
+Introduction
+------------
+Imagine that you have some arbitrary surface in space. Now suppose that you have some function that, for any point, tells you how far away you are from it. How would you draw this surface?
+
+Rendering techniques
+---------------------------
+
+#### Lighting
+Our distance function is special type of function known as a scalar field, because it assigns each point (x, y, z) a scalar quantity (the distance to the closest surface). Knowing this, we can approximate the surface normal using what is known as the **gradient**.
+
+The gradient of a scalar field is a vector, pointing in the direction where the field increases or decreases the most. Its magnitude is how big this change is. Naturally, the distance to a surface will increase more if we move *normally* away from it, rather than parallell to it. Thus, the gradient points in the same direction as the normal.
+
+To approximate the gradient, we need to find the partial derivatives of our distance field at the point of interest. That is, how much the distance changes in the x, y and z direction.
+
+[Khan Academy](https://www.khanacademy.org/math/calculus/partial_derivatives_topic/gradient/v/gradient-of-a-scalar-field) has a great video about gradients of scalar fields.
+
+The raymarching algorithm:
+
+	void raymarch(vec3 start, vec3 direction) {
+		float t = 0.0f;
+		for(int i = 0; i < maxSteps; ++i) {
+			float d = distScene(start + direction * t);
+			if(d < epsilon) {
+				// p is on the surface
+			}
+
+			t += d;
+		}
+	}
+
+References
+----------
+These are my main resources while working with this project. I strongly recommend taking a look at them, as they are filled with both intriguing code samples and visuals.
+
+* [Inigo Quilez: *Raymarching Distance Fields*](http://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm)
+* [Inigo Quilez: *Modeling with Distance Functions*](http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
+* [hvidtfeldts: *Distance Estimated 3D Fractals*](http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/)
+* [John C. Hart: *Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces* (1994)](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.3825)
+* [fractalforums: *Kaleidoscopic (escape time) IFS*](http://www.fractalforums.com/ifs-iterated-function-systems/kaleidoscopic-(escape-time-ifs)/)
+* [pouet: *Raymarching beginner's thread*](http://pouet.net/topic.php?which=7920&page=1&x=11&y=6)
+* [pouet: *Raymarching toolbox*](http://pouet.net/topic.php?which=7931&page=1&x=3&y=14)
+
+Thanks
+------
+Special thanks to Iñigo Quilez (iq) for his efforts in the demoscene on this topic, as well as various forum members of pouet.net, for being super helpful.

@@ -33,7 +33,7 @@ The distance function for the composed scene will then be the minimum of all the
 
 To solve for intersection, we march along the ray in variable steps. That is: for any point along the ray, we find the smallest distance to any surface in the scene and step forward this distance. Repeat until the distance is below a given epsilon. This way we can speed up the raymarching, and prevent missing surfaces
 
-Displaing the results
+Displaying the results
 ---------------------
 Using OpenGL we create a quadrilateral and a texture to be rendered onto that quad.
 This allows us to render at a resolution lower than the window and simply scale the quad in the vertex shader.
@@ -93,6 +93,9 @@ Resources
 *	[Raymarching beginner's thread](http://pouet.net/topic.php?which=7920&page=52)
 *	[Basic raymarching tutorial](http://pouet.net/topic.php?which=8177&page=2)
 *	[GPU gems](http://http.developer.nvidia.com/GPUGems3/gpugems3_ch34.html)
+*	[Simple pathtracing](http://www.iquilezles.org/www/articles/simplepathtracing/simplepathtracing.htm)
+*	[hvidtfeldt: Distance estimators](http://blog.hvidtfeldts.net/index.php/2011/08/distance-estimated-3d-fractals-iii-folding-space/)
+*	[Kaleidoscopic (escape time) IFS](http://www.fractalforums.com/ifs-iterated-function-systems/kaleidoscopic-(escape-time-ifs)/)
 
 Raytracing
 ----------
