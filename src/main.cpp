@@ -18,8 +18,8 @@ float g_zFar		= 25.0f;								// Far plane distance from camera
 float g_moveSpeed	= 0.1f;
 
 // Raymarch parameters
-int g_rmSteps		= 512;
-float g_rmEpsilon	= 0.0005f;
+int g_rmSteps		= 128;
+float g_rmEpsilon	= 0.001f;
 
 // Scene
 //vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
@@ -31,8 +31,8 @@ vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
 //vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
 vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
 
-const int g_windowWidth = 320;
-const int g_windowHeight = 200;
+const int g_windowWidth = 400;
+const int g_windowHeight = 400;
 float g_aspectRatio = g_windowWidth / (float)g_windowHeight;
 
 void updateCamera()
@@ -165,10 +165,10 @@ int main()
 
 		updateCamera();
 
-		g_camUp = vec3(0.21f, 0.91f, 0.347f);
+		/*g_camUp = vec3(0.21f, 0.91f, 0.347f);
 		g_camRight = vec3(0.85f, 0, -0.52f);
 		g_eye = vec3(-0.42f, 0.73f, -1.35f);
-		g_camForward = cross(g_camRight, g_camUp);
+		g_camForward = cross(g_camRight, g_camUp);*/
 
 		double renderStart = glfwGetTime();
 		glClearColor(0, 0, 0, 0);

@@ -11,25 +11,53 @@ Content
 ----------
 * Introduction
 * The raymarching algorithm
-* Distance estimators
+ * Distance estimators
+ * A simple scene
+ * Perspective
 * Rendering techniques
+ * Fog
  * Ambient occlusion
  * Lighting
- * Shadows
- * Anti aliasing
- * Fog
+ * Anti-aliasing
  * Reflections
  * Colors and textures
+ * Gamma-correction
+* Optimizations
+ * Z-clipping
+ * Cone tracing
+ * 3D textures
 * Interesting applications
 * Code + documentation
 * References
 
 Introduction
 ------------
-Imagine that you have some arbitrary surface in space. Now suppose that you have some function that, for any point, tells you how far away you are from it. How would you draw this surface?
+Imagine that you have some arbitrary surface in space and a function which tells you how far away you are from it, at any point. How would you render this surface?
+
+We need to find out which points that lie on the surface. So our idea is to shoot rays from the eye, through each pixel, and find the closest object blocking the ray. Once we have found a point of intersection, we can compute the color and shading of the pixel!
+
+The raymarching algorithm
+-------------------------
+In traditional raytracing, a scene is often described by a set of triangles or spheres, making up a mesh. Together with some spatial acceleration structure we can quickly solve for the exact intersections between the rays and the objects. 
+
+With raymarching however, we allow for some leeway in the intersection, and accept it when a ray is *close enough* to a surface. This is done by marching along the ray at step sizes, and checking whether or not we within a certain threshold. Instead of stepping at a constant small step, we can speed things up by using a #distance estimator#.
+
+A simple scene
+--------------
+It's time to put the theory to the test. First of all, we need to figure out how to go from pixels in our window, to points in our virtual world. Let's define an upright plane in space, with a width and height of 2 units, centered at the origin, and call this our #image plane#.
+
+![Window to uv-coordinates]()
+
+Using OpenGL, we can upload a quad to the GPU, and the shaders will handle interpolation for us!
 
 Rendering techniques
 ---------------------------
+
+#### Z-clipping
+Defining a near plane and a far plane can be used to optimize the raymarching, by dropping the ray as soon as it leaves the clipping-volume.
+
+#### Fog
+To get fog, we simply blend the distance from the eye with the sky color.
 
 #### Lighting
 Our distance function is special type of function known as a scalar field, because it assigns each point (x, y, z) a scalar quantity (the distance to the closest surface). Knowing this, we can approximate the surface normal using what is known as the **gradient**.
@@ -59,9 +87,9 @@ References
 These are my main resources while working with this project. I strongly recommend taking a look at them, as they are filled with both intriguing code samples and visuals.
 
 * [Inigo Quilez: *Raymarching Distance Fields*](http://www.iquilezles.org/www/articles/raymarchingdf/raymarchingdf.htm)
+* [hvidtfeldts: *Distance Estimated 3D Fractals*](http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/)
 * [Inigo Quilez: *Modeling with Distance Functions*](http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
 * [Inigo Quilez: *Free Penumbra Shadows for Raymarching Distance Fields*](http://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm)
-* [hvidtfeldts: *Distance Estimated 3D Fractals*](http://blog.hvidtfeldts.net/index.php/2011/06/distance-estimated-3d-fractals-part-i/)
 * [John C. Hart: *Sphere Tracing: A Geometric Method for the Antialiased Ray Tracing of Implicit Surfaces* (1994)](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.3825)
 * [fractalforums: *Kaleidoscopic (escape time) IFS*](http://www.fractalforums.com/ifs-iterated-function-systems/kaleidoscopic-(escape-time-ifs)/)
 * [pouet: *Raymarching beginner's thread*](http://pouet.net/topic.php?which=7920&page=1&x=11&y=6)
@@ -69,4 +97,4 @@ These are my main resources while working with this project. I strongly recommen
 
 Thanks
 ------
-Special thanks to Iñigo Quilez (iq) for his efforts in the demoscene on this topic, as well as various forum members of pouet.net, for being super helpful.
+Special thanks to Iñigo Quilez (iq) for his efforts in the demoscene on this topic, as well as various forum members of pouet.net, for being super helpful. Hvidtfeldt's introductory articles were well-written and very useful for gaining an understanding of the topic.
