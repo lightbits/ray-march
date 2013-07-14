@@ -14,25 +14,25 @@ vec3 g_camForward	= cross(g_camRight, g_camUp);			// The forward-vector of the i
 vec3 g_eye			= vec3(0.0f, 0.0f, -2.0f);				// The eye position in the world
 float g_focalLength = 1.67f;									// Distance between eye and image-plane
 float g_zNear		= 0.0f;									// Near plane distance from camera
-float g_zFar		= 25.0f;								// Far plane distance from camera
+float g_zFar		= 15.0f;								// Far plane distance from camera
 float g_moveSpeed	= 0.1f;
 
 // Raymarch parameters
-int g_rmSteps		= 128;
+int g_rmSteps		= 64;
 float g_rmEpsilon	= 0.001f;
 
 // Scene
 //vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.95f, 0.95f, 0.95f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
-vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
+vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
+//vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
 vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
 //vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
 vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
+//vec4 g_light0Color 		= vec4(0.93f, 0.93f, 0.93f, 1.0f);
 
-const int g_windowWidth = 400;
-const int g_windowHeight = 400;
+const int g_windowWidth = 500;
+const int g_windowHeight = 300;
 float g_aspectRatio = g_windowWidth / (float)g_windowHeight;
 
 void updateCamera()
@@ -103,13 +103,13 @@ int main()
 	glfwSetMousePos(g_windowWidth / 2, g_windowHeight / 2);
 	glfwDisable(GLFW_MOUSE_CURSOR);
 
-	std::string raymarch_vert, raymarch_frag;
-	if(!readFile("data/raymarch.vert", raymarch_vert) ||
-		!readFile("data/raymarch.frag", raymarch_frag))
+	std::string quad_lerp_vert, rm_df_frag;
+	if(!readFile("data/quad_lerp.vert", quad_lerp_vert) ||
+		!readFile("data/rm_df.frag", rm_df_frag))
 		return EXIT_FAILURE;
 
-	GLuint vertShader0 = compileShader(GL_VERTEX_SHADER, 1, raymarch_vert);
-	GLuint fragShader0 = compileShader(GL_FRAGMENT_SHADER, 1, raymarch_frag);
+	GLuint vertShader0 = compileShader(GL_VERTEX_SHADER, 1, quad_lerp_vert);
+	GLuint fragShader0 = compileShader(GL_FRAGMENT_SHADER, 1, rm_df_frag);
 	GLuint program0 = createProgram(vertShader0, fragShader0);
 	glUseProgram(program0);
 
@@ -131,6 +131,7 @@ int main()
 	glEnableVertexAttribArray(positionAttrib);
 	glVertexAttribPointer(positionAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
+	GLuint g_resolutionLoc	= glGetUniformLocation(program0, "g_resolution");
 	GLuint g_camUpLoc		= glGetUniformLocation(program0, "g_camUp");
 	GLuint g_camRightLoc	= glGetUniformLocation(program0, "g_camRight");
 	GLuint g_camForwardLoc	= glGetUniformLocation(program0, "g_camForward");
@@ -146,6 +147,7 @@ int main()
 	GLuint g_light0PosLoc	= glGetUniformLocation(program0, "g_light0Position");
 	GLuint g_light0ColorLoc	= glGetUniformLocation(program0, "g_light0Color");
 	
+	glUniform2f(g_resolutionLoc,	g_windowWidth, g_windowHeight);
 	glUniform1f(g_zNearLoc,			g_zNear);
 	glUniform1f(g_zFarLoc,			g_zFar);
 	glUniform1f(g_aspectRatioLoc,	g_aspectRatio);
@@ -165,10 +167,10 @@ int main()
 
 		updateCamera();
 
-		/*g_camUp = vec3(0.21f, 0.91f, 0.347f);
-		g_camRight = vec3(0.85f, 0, -0.52f);
-		g_eye = vec3(-0.42f, 0.73f, -1.35f);
-		g_camForward = cross(g_camRight, g_camUp);*/
+		/*g_camUp = normalize(vec3(0.21f, 1.2f, 0.347f));
+		g_camRight = normalize(vec3(0.85f, 0, -0.52f));
+		g_eye = vec3(-0.42f, 0.93f, -1.35f);
+		g_camForward = normalize(cross(g_camRight, g_camUp));*/
 
 		double renderStart = glfwGetTime();
 		glClearColor(0, 0, 0, 0);

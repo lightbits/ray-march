@@ -3,6 +3,7 @@
 smooth in vec2 uv; // pixel coordinates mapped to [-1, 1] on both axes
 out vec4 outColor;
 
+uniform vec2 g_resolution;
 uniform vec3 g_camUp;
 uniform vec3 g_camRight;
 uniform vec3 g_camForward;
@@ -56,26 +57,6 @@ float sdBox(vec3 p, vec3 size)
 	return min(max(d.x, max(d.y, d.z)), 0.0f) + udBox(p, size);
 }
 
-float sdCylinderY(vec3 p, float r, float h)
-{
-	return max(length(p.xz) - r, abs(p.y) - h);
-}
-
-float sdHemiTop(vec3 p, float r)
-{
-	return max(length(p) - r, -p.y);
-}
-
-float sdHemiBottom(vec3 p, float r)
-{
-	return max(length(p) - r, p.y);
-}
-
-float udXyPlane(vec3 p, float y)
-{
-	return abs(p.y - y);
-}
-
 // Subtracts d1 from d0, producing f1 subtracted f2, where f2 is a signed distance function.
 float opSubtract(float d0, float d1)
 {
@@ -84,9 +65,15 @@ float opSubtract(float d0, float d1)
 
 float distScene(vec3 p)
 {
-	float d1 = sdSphere(p, 0.5f);
-	float d2 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.45f));
-	return min(d1, d2);
+	//float d1 = sdSphere(p, 0.5f);
+	//float d2 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.25f));
+	p.xz = mod(p.xz, 1.0) - vec2(0.5);
+	return sdBox(p - vec3(0, -0.25, 0), vec3(0.25));
+	//p = rotateY(p, 0.5f * p.y);
+	//return opSubtract(sdBox(p - vec3(0, 0.5, 0), vec3(0.5, 1.0, 0.5)), sdSphere(p - vec3(0, 0.5, 0), 0.7));
+	//return min(d1, min(d2, min(d3, d4)));
+	//return sdBox(p - vec3(0, -0.25, 0), vec3(0.25));
+	//return min(d1, d2);
 }
 
 void raymarch(vec3 ro, vec3 rd, out int i, out vec3 p, out float t)
@@ -132,12 +119,12 @@ float visibility(vec3 p0, vec3 p1, float k)
 // If p is near a surface, the function will approximate the surface normal.
 vec3 gradient(vec3 p)
 {
-	float h = 0.0001f;
+	vec2 eps = vec2(0.0001f, 0);
 
 	return normalize(vec3(
-		distScene(p + vec3(h,0,0)) - distScene(p - vec3(h,0,0)),
-		distScene(p + vec3(0,h,0)) - distScene(p - vec3(0,h,0)),
-		distScene(p + vec3(0,0,h)) - distScene(p - vec3(0,0,h))));
+		distScene(p + eps.xyy) - distScene(p - eps.xyy),
+		distScene(p + eps.yxy) - distScene(p - eps.yxy),
+		distScene(p + eps.yyx) - distScene(p - eps.yyx)));
 }
 
 /* Calculate the light intensity with soft shadows
@@ -193,6 +180,12 @@ float ambientOcclusion(vec3 p, vec3 n)
 	return clamp(oc, 0, 1);
 }
 
+vec4 getFloorAbsorption(vec3 p)
+{
+	vec2 m = mod(p.xz, 2.0f) - vec2(1.0f);
+	return m.x * m.y > 0.0f ? vec4(0.1f) : vec4(1.0f);
+}
+
 vec4 raytraceFloor(vec3 ro, vec3 rd, vec3 n, vec3 o)
 {
 	float t = dot(o - ro, n) / dot(rd, n);
@@ -207,6 +200,8 @@ vec4 raytraceFloor(vec3 ro, vec3 rd, vec3 n, vec3 o)
 			diffuseS(p, n, vec3(2.0f, 1.0f, 0.0f), vec4(1.0f, 0.5f, 0.5f, 1.0f))
 			) / 2.0f;
 
+	color *= getFloorAbsorption(p);
+
 	float ao = ambientOcclusion(p, n);
 	color = color * (1.0f - ao);
 
@@ -218,18 +213,21 @@ vec4 raytraceFloor(vec3 ro, vec3 rd, vec3 n, vec3 o)
 
 vec4 getColor(vec3 ro, vec3 rd)
 {
+	vec4 color = g_skyColor;
+
 	vec3 p;
 	float t;
 	int i;
 	raymarch(ro, rd, i, p, t);
-
-	vec4 color = g_skyColor;
 
 	// We hit a surface inside the clip-volume
 	if(i < g_rmSteps && t > g_zNear && t < g_zFar)
 	{
 		// The distance traveled by the ray mapped to [0, 1], not clamped
 		float z = mapTo(t, g_zNear, g_zFar, 1, 0);
+
+		// Color based on depth
+		//color = vec4(1.0f) * z;
 
 		// Approximate surface normal
 		vec3 normal = gradient(p);
@@ -249,7 +247,7 @@ vec4 getColor(vec3 ro, vec3 rd)
 
 		// Blend the background color based on the distance from the camera
 		float zSqrd = z * z;
-		color = mix(g_skyColor, color, zSqrd * (3.0f - 2.0f * z)); // Fog	
+		color = mix(g_skyColor, color, zSqrd * (3.0f - 2.0f * z)); // Fog
 	}
 	else
 	{
@@ -261,19 +259,17 @@ vec4 getColor(vec3 ro, vec3 rd)
 
 void main()
 {
-	float imgWidth = 480.0f;
-	float imgHeight = 480.0f;
-	float hpw = 1.0f / (2 * imgWidth);
-	float hph = 1.0f / (2 * imgHeight);
+	vec2 hps = vec2(1.0) / (g_resolution * 2.0);
 	vec3 ro = g_eye;
 	vec3 rd = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * uv.y);
-	vec4 color = getColor(ro, rd);
 
-	//vec3 rd1 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) * g_aspectRatio + g_camUp * (uv.y - hph));
-	//vec3 rd2 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) * g_aspectRatio + g_camUp * (uv.y - hph));
-	//vec3 rd3 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hpw) * g_aspectRatio + g_camUp * (uv.y + hph));
-	//vec3 rd4 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hpw) * g_aspectRatio + g_camUp * (uv.y + hph));
-	//vec4 color = (getColor(ro, rd1) + getColor(ro, rd2) + getColor(ro, rd3) + getColor(ro, rd4)) / 4.0f;
+	vec4 color = getColor(ro, rd);
+	//vec3 rd0 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x - hps.x) * g_aspectRatio + g_camUp * uv.y);
+	//vec3 rd1 = normalize(g_camForward * g_focalLength + g_camRight * (uv.x + hps.x) * g_aspectRatio + g_camUp * uv.y);
+	//vec3 rd2 = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * (uv.y - hps.y));
+	//vec3 rd3 = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * (uv.y + hps.y));
+
+	//vec4 color = (getColor(ro, rd0) + getColor(ro, rd1) + getColor(ro, rd2) + getColor(ro, rd3)) / 4.0;
 
 	outColor = vec4(color.xyz, 1.0f);
 }
