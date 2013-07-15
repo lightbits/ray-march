@@ -1,4 +1,21 @@
-var gl;
+var gl = null;
+
+function initGL(canvas) {
+	if(!window.WebGLRenderingContext) {
+		var container = document.getElementById("container");
+		container.innerHTML = "Unable to initialize <a href=\"http://get.webgl.org\">WebGL</a>. Your browser may not support it.";
+	}
+
+	try {
+		gl = canvas.getContext("webgl"); 
+		gl.viewportWidth = canvas.width;
+		gl.viewportHeight = canvas.height;
+	} catch(e) { }
+
+	if(!gl) {
+		container.innerHTML = "Your browser supports WebGL but initialization failed. See <a href=\"http://get.webgl.org/troubleshooting\">troubleshooting WebGL</a>.";
+	}
+}
 
 function getShader(gl, id) {
 	var script = document.getElementById(id);
@@ -36,12 +53,9 @@ function getShader(gl, id) {
 }
 
 var program;
-var positionAttribLoc;
 var vbo;
 
-function init(canvas) {
-	gl.viewport(0, 0, canvas.width, canvas.height);
-
+function initProgram() {
 	var fragmentShader = getShader(gl, "fshader");
 	var vertexShader = getShader(gl, "vshader");
 
@@ -67,41 +81,168 @@ function init(canvas) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(quad), gl.STATIC_DRAW);
 
-	positionAttribLoc = gl.getAttribLocation(program, "position");
-	gl.enableVertexAttribArray(positionAttribLoc);
-	gl.vertexAttribPointer(positionAttribLoc, 3, gl.FLOAT, false, 0, 0);
+	program.positionAttrib = gl.getAttribLocation(program, "position");
+	gl.enableVertexAttribArray(program.positionAttrib);
+	gl.vertexAttribPointer(program.positionAttrib, 3, gl.FLOAT, false, 0, 0);
 
-	g_colorLoc = gl.getUniformLocation(program, "g_color");
+	program.resolutionUniform = gl.getUniformLocation(program, "g_resolution");
+	program.camUpUniform = gl.getUniformLocation(program, "g_camUp");
+	program.camRightUniform = gl.getUniformLocation(program, "g_camRight");
+	program.camForwardUniform = gl.getUniformLocation(program, "g_camForward");
+	program.eyeUniform = gl.getUniformLocation(program, "g_eye");
+	program.light0PositionUniform = gl.getUniformLocation(program, "g_light0Position");
+	program.light0ColorUniform = gl.getUniformLocation(program, "g_light0Color");
 }
 
-function render() {
-	gl.clearColor(0.3, 0.3, 0.3, 1);
+var g_eye;
+var g_camUp;
+var g_camRight;
+var g_camForward;
+var g_light0Position = [0, 4, 0];
+var g_light0Color = [0.67, 0.87, 0.93, 1.0];
+var horizontalAngle = 0.0;
+var verticalAngle = 0.0;
+
+function initCamera() {
+	g_eye = [0, 1, -2];
+	g_camUp = [0, 1, 0];
+	g_camRight = [1, 0, 0];
+	g_camForward = vec3.create();
+	vec3.cross(g_camForward, g_camRight, g_camUp);
+	vec3.normalize(g_camForward, g_camForward);
+}
+
+var mouseSpeedX = null;
+var mouseSpeedY = null;
+
+function handleMouseMove(event) {
+	var mouseX = event.clientX;
+	var mouseY = event.clientY;
+
+	var rect = document.getElementById("glcanvas").getBoundingClientRect();
+	var dx = mouseX - (rect.left + rect.width / 2);
+	var dy = mouseY - (rect.top + rect.height / 2);
+
+	mouseSpeedX = dx * 0.00005;
+	mouseSpeedY = dy * 0.00005;
+}
+
+var currentKeys = {};
+
+function handleKeyDown(event) {
+	currentKeys[event.keyCode] = true;
+}
+
+function handleKeyUp(event) {
+	currentKeys[event.keyCode] = false;
+}
+
+function handleInput() {
+	var moveSpeed = 0.05;
+	if(currentKeys[87]) { // Forward
+		g_eye[0] += g_camForward[0] * moveSpeed;
+		g_eye[1] += g_camForward[1] * moveSpeed;
+		g_eye[2] += g_camForward[2] * moveSpeed;
+	} else if(currentKeys[83]) { // Backward
+		g_eye[0] -= g_camForward[0] * moveSpeed;
+		g_eye[1] -= g_camForward[1] * moveSpeed;
+		g_eye[2] -= g_camForward[2] * moveSpeed;
+	}
+
+	if(currentKeys[68]) { // Right
+		g_eye[0] += g_camRight[0] * moveSpeed;
+		g_eye[1] += g_camRight[1] * moveSpeed;
+		g_eye[2] += g_camRight[2] * moveSpeed;
+	} else if(currentKeys[65]) { // Left
+		g_eye[0] -= g_camRight[0] * moveSpeed;
+		g_eye[1] -= g_camRight[1] * moveSpeed;
+		g_eye[2] -= g_camRight[2] * moveSpeed;
+	}
+
+	if(currentKeys[37]) { // Arrow left
+		g_light0Position[0] -= g_camRight[0] * moveSpeed;
+		g_light0Position[1] -= g_camRight[1] * moveSpeed;
+		g_light0Position[2] -= g_camRight[2] * moveSpeed;
+	} else if(currentKeys[39]) { // Arrow right
+		g_light0Position[0] += g_camRight[0] * moveSpeed;
+		g_light0Position[1] += g_camRight[1] * moveSpeed;
+		g_light0Position[2] += g_camRight[2] * moveSpeed;
+	}
+
+	if(currentKeys[38]) { // Arrow up
+		g_light0Position[0] += g_camUp[0] * moveSpeed;
+		g_light0Position[1] += g_camUp[1] * moveSpeed;
+		g_light0Position[2] += g_camUp[2] * moveSpeed;
+	} else if(currentKeys[40]) { // Arrow down
+		g_light0Position[0] -= g_camUp[0] * moveSpeed;
+		g_light0Position[1] -= g_camUp[1] * moveSpeed;
+		g_light0Position[2] -= g_camUp[2] * moveSpeed;
+	}
+}
+
+function updateCamera() {
+	horizontalAngle += mouseSpeedX;
+	verticalAngle += mouseSpeedY;
+
+	if(horizontalAngle > 2.0 * Math.PI)
+		horizontalAngle -= 2.0 * Math.PI;
+	else if(horizontalAngle < 0.0)
+		horizontalAngle += 2.0 * Math.PI;
+
+	if(verticalAngle > 2.0 * Math.PI)
+		verticalAngle -= 2.0 * Math.PI;
+	else if(verticalAngle < 0.0)
+		verticalAngle += 2.0 * Math.PI;
+
+	// Update camera vectors
+	var sintheta = Math.sin(horizontalAngle);
+	var costheta = Math.cos(horizontalAngle);
+	var sinphi = Math.sin(verticalAngle);
+	var cosphi = Math.cos(verticalAngle);
+	g_camForward = [cosphi * sintheta, -sinphi, cosphi * costheta];
+	g_camRight = [costheta, 0.0, -sintheta];
+	vec3.cross(g_camUp, g_camForward, g_camRight);
+	vec3.normalize(g_camUp, g_camUp);
+}
+
+function updateUniforms() {
+	gl.uniform2f(program.resolutionUniform, gl.viewportWidth, gl.viewportHeight);
+	gl.uniform3f(program.camUpUniform, g_camUp[0], g_camUp[1], g_camUp[2]);
+	gl.uniform3f(program.camRightUniform, g_camRight[0], g_camRight[1], g_camRight[2]);
+	gl.uniform3f(program.camForwardUniform, g_camForward[0], g_camForward[1], g_camForward[2]);
+	gl.uniform3f(program.eyeUniform, g_eye[0], g_eye[1], g_eye[2]);
+	gl.uniform3f(program.light0PositionUniform, g_light0Position[0], g_light0Position[1], g_light0Position[2]);
+	gl.uniform4f(program.light0ColorUniform, g_light0Color[0], g_light0Color[1], g_light0Color[2], g_light0Color[3]);
+}
+
+function render(canvas) {
 	gl.clear(gl.COLOR_BUFFER_BIT);
 
-	gl.uniform3f(g_colorLoc, 1.0, 0.5, 0.0);
+	handleInput();
+	updateCamera();
+	updateUniforms();
 
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
+function tick() {
+	requestAnimFrame(tick);
+	render();
+}
+
 function start() {
 	var canvas = document.getElementById("glcanvas");
-	var container = document.getElementById("container");
 
-	if(!window.WebGLRenderingContext) {
-		container.innerHTML = "Unable to initialize <a href=\"http://get.webgl.org\">WebGL</a>. Your browser may not support it.";
-	}
+	initGL(canvas);
+	initProgram();
+	initCamera();
 
-	gl = null;
-	try {
-		gl = canvas.getContext("webgl"); 
-	} catch(e) {
+	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+	gl.clearColor(0.3, 0.3, 0.3, 1);
 
-	}
+	document.onmousemove = handleMouseMove;
+	document.onkeydown = handleKeyDown;
+	document.onkeyup = handleKeyUp;
 
-	if(!gl) {
-		container.innerHTML = "Your browser supports WebGL but initialization failed. See <a href=\"http://get.webgl.org/troubleshooting\">troubleshooting WebGL</a>.";
-	} else {
-		init(canvas);
-		render();
-	}
+	tick();
 }
