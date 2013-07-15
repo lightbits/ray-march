@@ -9,6 +9,8 @@ For this article I will write about the rendering technique known as **raymarchi
 
 **slisesix by Inigo Quilez**
 
+Before reading on, perhaps you would like to try the [**interactive WebGL demo?**](https://dl.dropboxusercontent.com/u/27844576/raymarch/raymarching.html)
+
 Content
 ----------
 * Introduction
@@ -164,6 +166,7 @@ A simple black or white image is not too exciting. Alot of these can be found bo
 A quick way to spice things up, is to let the color depend on the ray step count. That is, how many steps the raymarch function performed before bailing out or hitting a surface. This will allow you to see where the most intensive portions of your image are.
 
 ![Iteration based color](http://4.bp.blogspot.com/-uoHgx5pgwv8/UeL7CD1z31I/AAAAAAAAAD8/cgHwGfx_GPg/s1600/iterations.png)
+
 **Iteration-based coloring. The maximum step count was set to 64.**
 
 #### Bounding volume
@@ -176,8 +179,6 @@ Fog is important to get a sense of scale and distance, and can be used to avoid 
 
 To get fog, we can simply blend the distance from the eye with the sky color. In the simplest case, we can define the near- and far-clipping planes to have blending factors of 0 and 1, respectively, and linearly interpolate between these based on the distance.
 
-![Linear fog](http://3.bp.blogspot.com/-l2HGv638kR0/UeL7CQTlISI/AAAAAAAAAEQ/_cE9zY17aSk/s1600/linear_fog.png)
-
 More realistic blending methods can be found [here](http://www.iquilezles.org/www/articles/fog/fog.htm).
 
 #### Anti-aliasing
@@ -185,7 +186,7 @@ Instead of casting a single ray per pixel, we can distribute multiple rays insid
 
 ![Anti aliasing diagram](http://2.bp.blogspot.com/-0xKCK5FFZX4/UeL7Bwa8xzI/AAAAAAAAAD4/yg-pUTAfr7I/s1600/antialiasing.png)
 
-Note that anti-aliasing is only necessary along edges of objects. An interesting optimization could be to only perform AA if the iteration count is above average, as it likely indicates the edge of an object.
+An interesting optimization could be to only perform AA if the iteration count is above average, as it likely indicates the edge of an object.
 
 #### Lighting
 A simple lighting model is the *Lambertian reflectance* model. The idea is that the light intensity at a point depends on the angle between the surface normal and the direction to the light. By clamping the dot product of these vectors between 0 and 1, we get a measure for how strongly the point should be lit. For more on lighting models, Arcsynthesis' tutorial explains the topic quite well: [Arcsynthesis: Lights on](http://www.arcsynthesis.org/gltut/Illumination/Tutorial%2009.html).
@@ -241,7 +242,7 @@ Which results in many cubes repeated in the xz-plane:
 
 ![Repeated cubes](http://4.bp.blogspot.com/-OPfiwoAnJ5k/UeL7Dd2_rOI/AAAAAAAAAEk/KbyFYOHc5cQ/s1600/repetition.png)
 
-By combining domain repetition with subtracting distance fields from eachother (as described in the beginning), we can make cool 3D fractal objects like this:
+By combining domain repetition with subtracting distance fields from eachother (as described in the beginning), we can make complex objects like this:
 
 ![Domain fractal](http://2.bp.blogspot.com/-UhTlNBbAsks/UeR49uPRSmI/AAAAAAAAAGU/NUq2l8NlINw/s1600/subtract_modulo2.png)
 **Domain repeated spheres are subtracted from a non-repeated, larger sphere**
