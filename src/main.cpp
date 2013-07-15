@@ -3,16 +3,14 @@
 #include <src/fileio.h>
 using namespace glm;
 
-const float TWO_PI = 6.28318530718f;
-
 // Camera
-float g_theta = 0.0f;
-float g_phi = 0.0f;
+float g_theta = 0.0f;										// Horizontal angle
+float g_phi = 0.0f;											// Vertical angle
 vec3 g_camUp		= normalize(vec3(0.0f, 1.0f, 0.0f));	// The upward-vector of the image plane
 vec3 g_camRight		= normalize(vec3(1.0f, 0.0f, 0.0f));	// The right-vector of the image plane
 vec3 g_camForward	= cross(g_camRight, g_camUp);			// The forward-vector of the image plane
 vec3 g_eye			= vec3(0.0f, 0.0f, -2.0f);				// The eye position in the world
-float g_focalLength = 1.67f;									// Distance between eye and image-plane
+float g_focalLength = 1.67f;								// Distance between eye and image-plane
 float g_zNear		= 0.0f;									// Near plane distance from camera
 float g_zFar		= 15.0f;								// Far plane distance from camera
 float g_moveSpeed	= 0.1f;
@@ -22,20 +20,16 @@ int g_rmSteps		= 64;
 float g_rmEpsilon	= 0.001f;
 
 // Scene
-//vec4 g_skyColor 		= vec4(0.8f, 0.9f, 0.95f, 1.0f);
 vec4 g_skyColor 		= vec4(0.31f, 0.47f, 0.67f, 1.0f);
-//vec4 g_skyColor 		= vec4(0.1f, 0.1f, 0.15f, 1.0f);
 vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
-//vec4 g_light0Color 		= vec4(0.37f, 0.57f, 0.63f, 1.0f);
 vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
-//vec4 g_light0Color 		= vec4(0.93f, 0.93f, 0.93f, 1.0f);
 
 const int g_windowWidth = 500;
 const int g_windowHeight = 300;
 float g_aspectRatio = g_windowWidth / (float)g_windowHeight;
 
-void updateCamera()
+void updateCamera(float dt)
 {
 	if(glfwGetKey('A'))
 		g_eye -= g_camRight * g_moveSpeed;
@@ -68,16 +62,13 @@ void updateCamera()
 	int dx = mposX - g_windowWidth / 2;
 	int dy = mposY - g_windowHeight / 2;
 	g_theta += dx * 0.01f;
-	if(g_theta > TWO_PI)
-		g_theta -= TWO_PI;
-	else if(g_theta < 0.0f)
-		g_theta += TWO_PI;
+	static const float TWO_PI = 6.28318530718f;
+	if(g_theta > TWO_PI) g_theta -= TWO_PI;
+	else if(g_theta < 0.0f) g_theta += TWO_PI;
 
 	g_phi += dy * 0.01f;
-	if(g_phi > TWO_PI)
-		g_phi -= TWO_PI;
-	else if(g_phi < 0.0f)
-		g_phi += TWO_PI;
+	if(g_phi > TWO_PI) g_phi -= TWO_PI;
+	else if(g_phi < 0.0f) g_phi += TWO_PI;
 
 	float sintheta = sinf(g_theta);
 	float costheta = cosf(g_theta);
@@ -103,19 +94,22 @@ int main()
 	glfwSetMousePos(g_windowWidth / 2, g_windowHeight / 2);
 	glfwDisable(GLFW_MOUSE_CURSOR);
 
-	std::string quad_lerp_vert, rm_df_frag;
-	if(!readFile("data/quad_lerp.vert", quad_lerp_vert) ||
-		!readFile("data/rm_df.frag", rm_df_frag))
+	std::string raymarch_vs, raymarch_fs;
+	if(!readFile("data/raymarch.vs", raymarch_vs) ||
+		!readFile("data/raymarch.fs", raymarch_fs))
 		return EXIT_FAILURE;
 
-	GLuint vertShader0 = compileShader(GL_VERTEX_SHADER, 1, quad_lerp_vert);
-	GLuint fragShader0 = compileShader(GL_FRAGMENT_SHADER, 1, rm_df_frag);
-	GLuint program0 = createProgram(vertShader0, fragShader0);
+	GLuint raymarchVsObj = compileShader(GL_VERTEX_SHADER, 1, raymarch_vs);
+	GLuint raymarchFsObj = compileShader(GL_FRAGMENT_SHADER, 1, raymarch_fs);
+	GLuint program0 = createProgram(raymarchVsObj, raymarchFsObj);
 	glUseProgram(program0);
 
+	// A quad extending from -1 to 1 on the x and y axis (the entire screen)
 	GLfloat vertices[] = {
-		-1.0f, -1.0f, 1.0f, -1.0f, 1.0f,  1.0f, 
-		1.0f, 1.0f, -1.0f,  1.0f, -1.0f, -1.0f
+		-1.0f, -1.0f,
+		-1.0f,  1.0f,
+		 1.0f, -1.0f,
+		 1.0f,  1.0f
 	};
 
 	GLuint vao;
@@ -155,22 +149,13 @@ int main()
 	glUniform1i(g_rmStepsLoc,		g_rmSteps);
 
 	double renderTime = 0.0;
-	double targetFrameTime = 1.0 / 60.0;
+	double targetFrameTime = 1.0 / 30.0;
 	while(glfwGetWindowParam(GLFW_OPENED) == GL_TRUE)
 	{
 		if(glfwGetKey(GLFW_KEY_ESC))
 			glfwCloseWindow();
-		else if(glfwGetKey('R'))
-		{
-			std::cout<<g_camUp<<'\n'<<g_camRight<<'\n'<<g_eye<<'\n';
-		}
 
-		updateCamera();
-
-		/*g_camUp = normalize(vec3(0.21f, 1.2f, 0.347f));
-		g_camRight = normalize(vec3(0.85f, 0, -0.52f));
-		g_eye = vec3(-0.42f, 0.93f, -1.35f);
-		g_camForward = normalize(cross(g_camRight, g_camUp));*/
+		updateCamera(renderTime);
 
 		double renderStart = glfwGetTime();
 		glClearColor(0, 0, 0, 0);
@@ -186,7 +171,7 @@ int main()
 		glUniform3fv(g_light0PosLoc,		1, value_ptr(g_light0Position));
 		glUniform4fv(g_light0ColorLoc,		1, value_ptr(g_light0Color));
 
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		glfwSwapBuffers();
 		renderTime = glfwGetTime() - renderStart;

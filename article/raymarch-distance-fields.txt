@@ -1,4 +1,4 @@
-Raymarching Distance Fields
+﻿Raymarching Distance Fields
 ===========================
 
 Hello. This is my first article in a series of many, where I dive deep into an interesting algorithm and investigate what it can be used for, and (hopefully) end up with something nice to show in the end. For each of the projects my target result is a technical writeup like this, and either an interactive demo or some cool visuals. All code will be uploaded to Github, with full documentation.

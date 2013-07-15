@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>webgl raymarcing distance fields</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link rel="stylesheet" type="text/css" href="raymarching-style.css">
+	<script src="raymarching.js"></script>
+
+	<script id="vshader" type="x-shader/x-vertex">
+		attribute vec3 position;
+		varying vec2 uv;
+
+		void main(void) {
+			gl_Position = vec4(position, 1.0);
+
+			// Interpolate quad coordinates in the fragment shader
+			uv = position.xy;
+		}
+	</script>
+
+	<script id="fshader" type="x-shader/x-fragment">
+		precision mediump float;
+
+		// The interpolated quad coordinates from [-1, 1] on the x and y axis
+		varying vec2 uv;
+
+		// Maps x from [minX, maxX] to [minY, maxY], without clamping
+		float mapTo(float x, float minX, float maxX, float minY, float maxY)
+		{
+			float a = (maxY - minY) / (maxX - minX);
+			float b = minY - a * minX;
+			return a * x + b;
+		}
+
+		// Returns the unsigned distance estimate to a box of the given size
+		float udBox(vec3 p, vec3 size)
+		{
+			return length(max(abs(p) - size, vec3(0.0)));
+		}
+
+		// Returns the signed distance estimate to a box of the given size
+		float sdBox(vec3 p, vec3 size)
+		{
+			vec3 d = abs(p) - size;
+			return min(max(d.x, max(d.y, d.z)), 0.0) + udBox(p, size);
+		}
+
+		float sdSphere(vec3 p, float radius)
+		{
+			return length(p) - radius;
+		}
+
+		// Subtracts distance field db from da, where db is a signed distance
+		float opSubtract(float da, float db)
+		{
+			return max(da, -db);
+		}
+
+		// Returns the closest distance to a surface from p in our scene
+		float distScene(vec3 p)
+		{
+			float d1 = sdSphere(p, 0.5);
+			return d1;
+		}
+
+		// Marches along a ray using the distance field, until an intersection is found
+		// i: iteration count
+		// p: intersection point (if found)
+		// t: distance traveled along ray
+		void raymarch(vec3 ro, vec3 rd, out int i, out vec3 p, out float t)
+		{
+			p = ro;
+			t = 0.0;
+		}
+
+		void main(void) {
+			vec3 g_eye = vec3(0, 0.8, -2);
+			vec3 g_camRight = normalize(vec3(1, 0, 0));
+			vec3 g_camUp = normalize(vec3(0, 1, 0.5));
+			vec3 g_camForward = normalize(cross(g_camRight, g_camUp));
+
+			float g_aspectRatio = 500.0 / 300.0;
+			float g_focalLength = 1.67;
+
+			vec3 ro = g_eye;
+			vec3 rd = normalize(g_camForward * g_focalLength + g_camRight * uv.x * g_aspectRatio + g_camUp * uv.y);
+
+			vec4 color = vec4(0.0);
+
+			float t = 0.0;
+			for(int i = 0; i < 64; ++i)
+			{
+				vec3 p = ro + rd * t;
+				float d = sdBox(p, vec3(0.55));
+				if(d < 0.001 && t < 4.0)
+				{
+					color = vec4(1.0) * mapTo(t, 0.0, 4.0, 1.0, 0.0);
+					break;
+				}
+
+				t += d;
+			}
+
+			gl_FragColor = vec4(color.xyz, 1.0);
+		}
+	</script>
+</head>
+<body onload="start()">
+	<div id="info"><a href="">raymarching.js</a> - Real-time raymarching with distance fields</div>
+
+	<div id="container"><canvas id="glcanvas" width="500" height="300">
+		Your browser doesn't appear to support the HTML5 canvas
+	</canvas></div>
+
+	<div id="copyright">Copyright (c) 2013 <a href="http://9bitscience.blogspot.no/2013/07/raymarching-distance-fields_14.html">9bit Science</a></div>
+</body>
+</html>
