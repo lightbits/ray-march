@@ -69,12 +69,14 @@ But this can be slow if the step size is small, and inaccurate if the step size 
 
 The basic idea is to make sure every surface in our scene is given by a distance estimator (DE), which returns the distance to it from a point p. This way, we can find the distance to the closest surface in the scene, and know that we can step *this far* without overshooting.
 
-![Raymarching variable step]()
+![Raymarching variable step](http://3.bp.blogspot.com/-x8E4QGbdsTs/UeL7DODAoyI/AAAAAAAAAEo/GfHOsYjs4Bk/s1600/raymarching-alg.png)
 
 #### Distance estimators
 Consider a sphere centered at the origin with radius *r*. The distance from a point *p* to the sphere is given by:
-
-![eq: sdSphere]()
+	
+	float distSphere(vec3 p, float radius) {
+		return length(p) - radius;
+	}
 
 This function gives us **signed distance**, because the distance is negative or positive depending on whether we are inside or outside the sphere. In the later sections we will see that this is important in order to compute the surface normal.
 
@@ -95,14 +97,13 @@ A simple scene
 --------------
 It's time to put the theory to the test. But how do we go from pixels in the image, to points in our virtual world?
 
-![Window to image plane]()
+![Window to image plane](http://3.bp.blogspot.com/-pooioOCAaf8/UeL7Ebf1ImI/AAAAAAAAAE8/YjgJAg5Rdc4/s1600/window-to-uv.png)
 
 Let's say that our window has a position and orientation in the world, the *image plane*. For the sake of simplicity, we scale it down to a rectangle of width and height 2 units. We define a pair of coordinates, u and v, both going from -1 to 1, representing the corners of the rectangle. This way, the top-left corner of the window (0, 0), becomes (-1, 1) in uv-coordinates. While the bottom-right corner becomes (1, -1).
 
 We decide the orientation of the rectangle by defining an **up-vector** and a **right-vector**. A point on the image plane in world-coordinate is then:
-	
-s = eye + right * u + up * v
-![Eq: Window to world]()
+
+![Eq: Window to world](http://4.bp.blogspot.com/-Sa3_Pj4NQFA/UeL8tdyQpRI/AAAAAAAAAFc/dziCfBpgNPU/s1600/eq-window-to-world-ortho.png)
 
 For this scene, let's say that we fire rays perpendicular out of the image plane. If our up-vector is along the y-axis, the right-vector is along the x-axis, the **forward-vector** is either down the positive or negative z-axis. The former can be found by crossing the right vector with the up vector.
 
@@ -145,13 +146,15 @@ Perspective
 ----------
 Notice that in the first example, the ray direction was equal to the forward vector, causing every ray to be cast perpendicular to the image plane. This is actually how orthographic projection works, and is not very three-dee-y. What we want, is an illusion of depth. To do this, we can simulate a pinhole camera by positioning the eye *behind* the image plane, like so:
 
-![Perspective model]()
+![Perspective model](http://2.bp.blogspot.com/-AuRSuWpC1WU/UeL7CcQLmYI/AAAAAAAAAEM/6SFX41PNaTQ/s1600/perspective.png)
 
 The distance between the eye and the image plane is analogue to the focal length of a camera lens and focal point. The best part is, this does not change the behaviour of the rays, but merely what direction we cast them!
 
 A point on the image plane is now given by:
 
-![Eq: Window to image plane perspective]()
+![Eq: Window to image plane perspective](http://4.bp.blogspot.com/-bq-1NmvM1Uo/UeL8tSMWtaI/AAAAAAAAAFg/eiyyZFOApKs/s1600/eq-window-to-world-perspective.png),
+
+where *f* is the distance between the eye and the image plane, along the forward vector.
 
 The ray direction can now be found by taking the difference between the image plane position and the eye.
 
@@ -162,7 +165,7 @@ A simple black or white image is not too exciting. Alot of these can be found bo
 #### Iteration count
 A quick way to spice things up, is to let the color depend on the ray step count. That is, how many steps the raymarch function performed before bailing out or hitting a surface. This will allow you to see where the most intensive portions of your image are.
 
-![Iteration based color]()
+![Iteration based color](http://4.bp.blogspot.com/-uoHgx5pgwv8/UeL7CD1z31I/AAAAAAAAAD8/cgHwGfx_GPg/s1600/iterations.png)
 
 #### Bounding volume
 We can speed up the raymarching if we limit the rays to a certain bounding volume.
@@ -174,14 +177,14 @@ Fog is important to get a sense of scale and distance, and can be used to avoid 
 
 To get fog, we can simply blend the distance from the eye with the sky color. In the simplest case, we can define the near- and far-clipping planes to have blending factors of 0 and 1, respectively, and linearly interpolate between these based on the distance.
 
-![Linear fog]()
+![Linear fog](http://3.bp.blogspot.com/-l2HGv638kR0/UeL7CQTlISI/AAAAAAAAAEQ/_cE9zY17aSk/s1600/linear_fog.png)
 
 More realistic blending methods can be found [here](http://www.iquilezles.org/www/articles/fog/fog.htm).
 
 #### Anti-aliasing
 Instead of casting a single ray per pixel, we can distribute multiple rays inside a single pixel, sum the results and calculate the average. This will effectively remove sharp edges, and wreck your framerate at the same time, so be careful.
 
-![Anti aliasing diagram]()
+![Anti aliasing diagram](http://2.bp.blogspot.com/-0xKCK5FFZX4/UeL7Bwa8xzI/AAAAAAAAAD4/yg-pUTAfr7I/s1600/antialiasing.png)
 
 Note that anti-aliasing is only necessary along edges of objects. An interesting optimization could be to only perform AA if the iteration count is above average, as it likely indicates the edge of an object.
 
@@ -205,8 +208,12 @@ The gradient can be approximated by numerical differentation, and normalized to 
 #### Shadows
 Light rarely looks good without shadows. Luckily for us, this is fairly easy to implement. Simply check if the path from the point to shade to each light source is obstructed or not, by raymarching. This will produce a hard-shadow, but it is possible to get good looking soft-shadows, [almost for free](http://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm).
 
+![Soft shadows](http://1.bp.blogspot.com/-VDgVKI8T_Gk/UeL7D_bPPKI/AAAAAAAAAEs/4LMg81mDiHI/s1600/softshadows.png)
+
 #### Ambient occlusion
 Once we have obtained the surface normal (see the section about Lighting), we can easily fake an ambient occlusion effect. A proposed method is to sample along the surface normal a couple of times, comparing the value of the distance field with the actual distance from the surface. For example, if the difference is 0, the surface is not occluded. If there are other surfaces closer to the ray at the sample point, the difference will be non-zero.
+
+![Ambient occlusion](http://1.bp.blogspot.com/-rTU9gDQcc8c/UeL7B3c5FvI/AAAAAAAAAEU/Eh7Noewp3UQ/s1600/ambientocclusion.png)
 
 #### Reflections
 A simple reflection can be calculated by raymarching off the surface normal, and blending the result together with the surface color.
@@ -221,7 +228,7 @@ Objects can be distorted by manipulating the point checked against in the distan
 
 This will produce a cube rotated more or less along the y-axis:
 
-![Twisted cube]()
+![Twisted cube](http://3.bp.blogspot.com/-LHB2J0yx2X0/UeL7EOYuDsI/AAAAAAAAAFA/OGfxdJf4Y_4/s1600/twisted_box.png)
 
 A scene can be repeated by taking the modulo of the point by some size:
 
@@ -233,7 +240,7 @@ A scene can be repeated by taking the modulo of the point by some size:
 
 Which results in many cubes repeated in the xz-plane:
 
-![Repeated cubes]()
+![Repeated cubes](http://4.bp.blogspot.com/-OPfiwoAnJ5k/UeL7Dd2_rOI/AAAAAAAAAEk/KbyFYOHc5cQ/s1600/repetition.png)
 
 Be careful though, as distorting the distance field like this can cause some nasty artifacts. A sort-of solution is to step shorter in the raymarching function than the distance field returns.
 
@@ -245,7 +252,7 @@ Consider a heightmap describing your terrain. It could be a texture sampler uplo
 
 See [Terrain marching](http://www.iquilezles.org/www/articles/terrainmarching/terrainmarching.htm) for a nice introduction.
 
-![Ixaleno/rgba by Inigo Quilez](http://www.iquilezles.org/www/articles/terrainmarching/ray_05_g.jpg)
+![Ixaleno/rgba by Inigo Quilez](http://1.bp.blogspot.com/-NqCg7Hqre9I/UeL7DO6KZSI/AAAAAAAAAFI/tJQgvY_hDPE/s1600/ray_05_g.jpg)
 
 **Ixaleno/rgba by Inigo Quilez**
 

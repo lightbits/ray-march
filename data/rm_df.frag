@@ -57,6 +57,14 @@ float sdBox(vec3 p, vec3 size)
 	return min(max(d.x, max(d.y, d.z)), 0.0f) + udBox(p, size);
 }
 
+float sdCross(vec3 p, float s)
+{
+	float d1 = sdBox(p, vec3(inf, s, s));
+	float d2 = sdBox(p, vec3(s, inf, s));
+	float d3 = sdBox(p, vec3(s, s, inf));
+	return min(min(d1, d2), d3);
+}
+
 // Subtracts d1 from d0, producing f1 subtracted f2, where f2 is a signed distance function.
 float opSubtract(float d0, float d1)
 {
@@ -67,9 +75,14 @@ float distScene(vec3 p)
 {
 	//float d1 = sdSphere(p, 0.5f);
 	//float d2 = sdBox(p - vec3(1.0f, 0.0f, 0.0f), vec3(0.25f));
-	p.xz = mod(p.xz, 1.0) - vec2(0.5);
-	return sdBox(p - vec3(0, -0.25, 0), vec3(0.25));
-	//p = rotateY(p, 0.5f * p.y);
+	//p.xz = mod(p.xz, 1.0) - vec2(0.5);
+	//return sdBox(p - vec3(0, -0.25, 0), vec3(0.25));
+	p = rotateY(p, 0.5f * p.y);
+	float d1 = sdBox(p - vec3(0, 0.5, 0), vec3(0.5, 1.0, 0.5));
+	float d2 = sdBox(p, vec3(2.0, 0.3, 0.25));
+	float d3 = sdCross(p - vec3(0, 0.5, 0), 0.4);
+	float d4 = sdSphere(p - vec3(0, 0.5, 0), 0.25);
+	return min(opSubtract(opSubtract(d1, d2), d3), d4);
 	//return opSubtract(sdBox(p - vec3(0, 0.5, 0), vec3(0.5, 1.0, 0.5)), sdSphere(p - vec3(0, 0.5, 0), 0.7));
 	//return min(d1, min(d2, min(d3, d4)));
 	//return sdBox(p - vec3(0, -0.25, 0), vec3(0.25));

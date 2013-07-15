@@ -155,7 +155,7 @@ int main()
 	glUniform1i(g_rmStepsLoc,		g_rmSteps);
 
 	double renderTime = 0.0;
-	double targetFrameTime = 1.0 / 30.0;
+	double targetFrameTime = 1.0 / 60.0;
 	while(glfwGetWindowParam(GLFW_OPENED) == GL_TRUE)
 	{
 		if(glfwGetKey(GLFW_KEY_ESC))
