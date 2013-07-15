@@ -5,7 +5,7 @@ Hello. This is my first article in a series of many, where I dive deep into an i
 
 For this article I will write about the rendering technique known as **raymarching with distance fields**, capable of producing highly detailed images in real-time with very simple code.
 
-![Iñigo Quilez' slisesix](http://www.iquilezles.org/www/material/nvscene2008/gfx00.jpg)
+![Inigo Quilez' slisesix](http://4.bp.blogspot.com/-Zjev0r-Eoms/UeQd_wcDInI/AAAAAAAAAGE/Py6rDNjTlCY/s1600/gfx00.jpg)
 
 **slisesix by Inigo Quilez**
 
@@ -32,11 +32,13 @@ Introduction
 ------------
 Raymarching is a 3d-rendering technique, praised by programming-enthusiasts for both its simplicity and speed. It has been used extensively in the demoscene, producing low-size executables and amazing visuals. The most frontstanding figure behind its popularity, is [Inigo Quilez](http://iquilezles.org/), promoting it with his presentation at nvscene: [*Rendering Worlds With Two Triangles*](http://www.iquilezles.org/www/material/nvscene2008/nvscene2008.htm).
 
-The idea is this:
+The idea is this: Say you have some surface in space. You don't have an explicit formula for it, nor a set of triangles describing it. But you can find out how far away it is, from any point. How would you render this surface?
 
-Say you have some surface in space. You don't have an explicit formula for it, nor a set of triangles describing it. But you can find out how far away it is, from any point. How would you render this surface?
+First of all, we need to find out which points that lie on the surface, and what pixels they correspond to. To do this we use a technique known as [ray-casting](http://en.wikipedia.org/wiki/Ray_casting).
 
-The idea behind a ray-based renderer, is to shoot rays from the eye, through each pixel, and find the closest intersection. Once we have found such a point, we can compute the color and shading for that pixel. A raymarcher does what it implies; it marches along the ray in steps until it finds an intersection. By controlling the step size using a *distance field*, we can reach blazing speeds, even on a regular laptop GPU.
+Imagine you and your monitor being placed in this virtual world. Your *eye* will be looking at a rectangle (your monitor), which we shall call the image plane. Ray-casting works by shooting rays from the eye through each pixel on the image plane, and finding the closest object blocking the path of the ray. Once we hit an object, we can compute the color and shading of the corresponding pixel. If the ray does not hit anything, the pixel is colored with some *sky color*.
+
+There are several ways in which we can calculate the intersection, for example we analytically solve for it. A raymarcher, however, looks for an approximate solution, by marching along the ray in steps until it finds an intersection. By controlling the step size using a *distance field*, we can reach blazing speeds, even on a regular laptop GPU.
 
 The raymarching algorithm
 -------------------------
@@ -45,24 +47,16 @@ In traditional raytracing, a scene is often described by a set of triangles or s
 With raymarching however, we allow for some leeway in the intersection, and accept it when a ray is *close enough* to a surface. This is done by marching along the ray at step sizes, and checking whether or not the surface is within a given threshold. We can set a limit on the number of steps to prevent marching into oblivion. In code the algorithm looks like this:
 
 	bool raymarch(vec3 rayOrigin, vec3 rayDirection) {
-		float t = 0.0f;
-		for(int i = 0; i < maxSteps; ++i) {
-			vec3 p = rayOrigin + rayDirection * t;
-			float d = distanceToSurface(p);
-
-			// We hit a surface
-			if(d < threshold) {
-
-				// Do something with p
-
-				return true;
-			}
-
-			t += stepSize;
-		}
-
-		// We didn't hit anything
-		return false;
+	    float t = 0.0f;
+	    for(int i = 0; i < maxSteps; ++i) {
+	        float d = sceneDistance(rayOrigin + rayDirection * t);
+	        if(d < epsilon) {
+	            // Do something with p
+	            return true;
+	        }
+	        t += d;
+	    }
+	    return false;
 	}
 
 But this can be slow if the step size is small, and inaccurate if the step size is large. So we speed things up by implementing a variable step size, and that is where **distance fields** comes in.
@@ -70,6 +64,8 @@ But this can be slow if the step size is small, and inaccurate if the step size 
 The basic idea is to make sure every surface in our scene is given by a distance estimator (DE), which returns the distance to it from a point p. This way, we can find the distance to the closest surface in the scene, and know that we can step *this far* without overshooting.
 
 ![Raymarching variable step](http://3.bp.blogspot.com/-x8E4QGbdsTs/UeL7DODAoyI/AAAAAAAAAEo/GfHOsYjs4Bk/s1600/raymarching-alg.png)
+
+In the figure above the distance field is evaluated at various points along the ray. At the first point (the eye) there is quite a large distance to the closest surface, so we step that far to the next point. This continues until we get close enough to say we hit the surface.
 
 #### Distance estimators
 Consider a sphere centered at the origin with radius *r*. The distance from a point *p* to the sphere is given by:
@@ -152,7 +148,7 @@ The distance between the eye and the image plane is analogue to the focal length
 
 A point on the image plane is now given by:
 
-![Eq: Window to image plane perspective](http://4.bp.blogspot.com/-bq-1NmvM1Uo/UeL8tSMWtaI/AAAAAAAAAFg/eiyyZFOApKs/s1600/eq-window-to-world-perspective.png),
+![Eq: Window to image plane perspective](http://4.bp.blogspot.com/-bq-1NmvM1Uo/UeL8tSMWtaI/AAAAAAAAAFg/eiyyZFOApKs/s1600/eq-window-to-world-perspective.png)
 
 where *f* is the distance between the eye and the image plane, along the forward vector.
 
@@ -166,6 +162,7 @@ A simple black or white image is not too exciting. Alot of these can be found bo
 A quick way to spice things up, is to let the color depend on the ray step count. That is, how many steps the raymarch function performed before bailing out or hitting a surface. This will allow you to see where the most intensive portions of your image are.
 
 ![Iteration based color](http://4.bp.blogspot.com/-uoHgx5pgwv8/UeL7CD1z31I/AAAAAAAAAD8/cgHwGfx_GPg/s1600/iterations.png)
+**Iteration-based coloring. The maximum step count was set to 64.**
 
 #### Bounding volume
 We can speed up the raymarching if we limit the rays to a certain bounding volume.
@@ -279,8 +276,10 @@ References
 
 Code
 ----
-A WebGL implementation will be up soon.
+A Github repo for the project can be found [here](https://github.com/lightbits/ray-march). The shader code is located in the data subfolder.
+
+The program is written in C++, using GLFW for creating an OpenGL context. A WebGL implementation will be up soon.
 
 Thanks
 ------
-Special thanks to Iñigo Quilez (iq) for his efforts in the demoscene on this topic, as well as various forum members of pouet.net, for being super helpful. Hvidtfeldt's introductory articles were well-written and very useful for gaining an understanding of the topic.
+Special thanks to Inigo Quilez (iq) for his efforts in the demoscene on this topic, as well as various forum members of pouet.net, for being super helpful. Hvidtfeldt's introductory articles were well-written and very useful for gaining an understanding of the topic.
