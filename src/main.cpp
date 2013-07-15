@@ -25,8 +25,8 @@ vec4 g_ambient			= vec4(0.15, 0.2f, 0.32f, 1.0f);
 vec3 g_light0Position 	= vec3(0.25f, 2.0f, 0.0f);
 vec4 g_light0Color 		= vec4(0.67f, 0.87f, 0.93f, 1.0f);
 
-const int g_windowWidth = 500;
-const int g_windowHeight = 300;
+const int g_windowWidth = 640;
+const int g_windowHeight = 480;
 float g_aspectRatio = g_windowWidth / (float)g_windowHeight;
 
 void updateCamera(float dt)

@@ -78,10 +78,13 @@ float opSubtract(float d0, float d1)
 // Defines the distance field for the scene
 float distScene(vec3 p)
 {
-	p = rotateY(p, 0.5f * p.y);
-	float d1 = sdBox(p - vec3(0, 0.5, 0), vec3(0.5, 1.0, 0.5));
-	float d2 = sdBox(p, vec3(2.0, 0.3, 0.25));
-	return opSubtract(d1, d2);
+	p.xz = mod(p.xz, 1.0f) - vec2(0.5f);
+	return sdBox(p - vec3(0.0f, -0.25f, 0.0f), vec3(0.25f));
+
+	// p = rotateY(p, 0.5f * p.y);
+	// float d1 = sdBox(p - vec3(0, 0.5, 0), vec3(0.5, 1.0, 0.5));
+	// float d2 = sdBox(p, vec3(2.0, 0.3, 0.25));
+	// return opSubtract(d1, d2);
 }
 
 // Finds the closest intersecting object along the ray at origin ro, and direction rd.
