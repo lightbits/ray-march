@@ -245,7 +245,7 @@ Which results in many cubes repeated in the xz-plane:
 By combining domain repetition with subtracting distance fields from eachother (as described in the beginning), we can make complex objects like this:
 
 ![Domain fractal](http://2.bp.blogspot.com/-UhTlNBbAsks/UeR49uPRSmI/AAAAAAAAAGU/NUq2l8NlINw/s1600/subtract_modulo2.png)
-**Domain repeated spheres are subtracted from a non-repeated, larger sphere**
+**Domain repeated cubes are subtracted from a non-repeated, larger sphere**
 
 Be careful though, as distorting the distance field like this can cause some nasty artifacts. A sort-of solution is to step shorter in the raymarching function than the distance field returns.
 
