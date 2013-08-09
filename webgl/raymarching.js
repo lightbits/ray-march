@@ -1,8 +1,8 @@
 var gl = null;
 
 function initGL(canvas) {
+	var container = document.getElementById("container");
 	if(!window.WebGLRenderingContext) {
-		var container = document.getElementById("container");
 		container.innerHTML = "Unable to initialize <a href=\"http://get.webgl.org\">WebGL</a>. Your browser may not support it.";
 	}
 

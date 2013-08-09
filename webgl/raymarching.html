@@ -94,6 +94,24 @@ float distScene(vec3 p)
 	p.xyz = mod(p.xyz, 1.0) - vec3(0.5);
 	return sdSphere(p, 0.25);
 
+	// float d0 = sdSphere(p - vec3(0, 0.6, 0), 1.5);
+	// float d1 = sdBox(p - vec3(-1.8, 0.25, 0), vec3(0.8));
+
+	// vec3 q = p;
+	// q.xyz = mod(p.xyz, 1.0) - vec3(0.5);
+	// float extrusionField0 = sdBox(q, vec3(0.28));
+
+	// vec3 r = p;
+	// r.xyz = mod(p.xyz, 0.5) - vec3(0.25);
+	// float extrusionField1 = sdSphere(r, 0.125);
+
+	// float df = min(d0, d1);
+	// float df0 = max(df, extrusionField0);
+	// float df1 = min(df0, df + 0.2);
+	// return df1;
+
+	// return sdSphere(p, 0.25);
+
 	// float da = sdBox(p - vec3(4.0, 0.5, 0.3), vec3(2.0));
 	// float d1 = opSubtract(db, sdSphere(p, 0.32));
 	// float d1 = opSubtract(ds, sdBox(p, vec3(0.2)));
