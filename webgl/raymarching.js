@@ -6,14 +6,12 @@ function initGL(canvas) {
 		container.innerHTML = "Unable to initialize <a href=\"http://get.webgl.org\">WebGL</a>. Your browser may not support it.";
 	}
 
-	try {
-		gl = canvas.getContext("webgl"); 
-		gl.viewportWidth = canvas.width;
-		gl.viewportHeight = canvas.height;
-	} catch(e) { }
+	try { gl = canvas.getContext("webgl"); } 
+	catch(e) { }
 
-	if(!gl) {
-		container.innerHTML = "Your browser supports WebGL but initialization failed. See <a href=\"http://get.webgl.org/troubleshooting\">troubleshooting WebGL</a>.";
+	if(gl == null) {
+		try { gl = canvas.getContext("experimental-webgl"); }
+		catch (e) { gl = null };
 	}
 }
 
@@ -234,15 +232,22 @@ function start() {
 	var canvas = document.getElementById("glcanvas");
 
 	initGL(canvas);
-	initProgram();
-	initCamera();
 
-	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-	gl.clearColor(0.3, 0.3, 0.3, 1);
+	if(gl)
+	{
+		gl.viewportWidth = canvas.width;
+		gl.viewportHeight = canvas.height;
 
-	document.onmousemove = handleMouseMove;
-	document.onkeydown = handleKeyDown;
-	document.onkeyup = handleKeyUp;
+		initProgram();
+		initCamera();
 
-	tick();
+		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+		gl.clearColor(0.3, 0.3, 0.3, 1);
+
+		document.onmousemove = handleMouseMove;
+		document.onkeydown = handleKeyDown;
+		document.onkeyup = handleKeyUp;
+
+		tick();
+	}
 }
