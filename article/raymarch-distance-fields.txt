@@ -1,15 +1,13 @@
 ﻿Raymarching Distance Fields
 ===========================
 
-Hello. This is my first article in a series of many, where I dive deep into an interesting algorithm and investigate what it can be used for, and (hopefully) end up with something nice to show in the end. For each of the projects my target result is a technical writeup like this, and either an interactive demo or some cool visuals. All code will be uploaded to Github, with full documentation.
-
-For this article I will write about the rendering technique known as **raymarching with distance fields**, capable of producing highly detailed images in real-time with very simple code.
+Hi. In this article I will tell you about a rendering technique known as **raymarching with distance fields**, capable of producing highly detailed images in real-time with very simple code.
 
 ![Inigo Quilez' slisesix](http://4.bp.blogspot.com/-Zjev0r-Eoms/UeQd_wcDInI/AAAAAAAAAGE/Py6rDNjTlCY/s1600/gfx00.jpg)
 
 **slisesix by Inigo Quilez**
 
-Before reading on, perhaps you would like to try the [**interactive WebGL demo?**](https://dl.dropboxusercontent.com/u/27844576/raymarch/raymarching.html)
+Before reading on, perhaps you would like to try the [**interactive WebGL demo?**](http://lightbits.github.io/toys/raymarching/raymarching.html)
 
 Content
 ----------
@@ -44,7 +42,7 @@ There are several ways in which we can calculate the intersection, for example w
 
 The raymarching algorithm
 -------------------------
-In traditional raytracing, a scene is often described by a set of triangles or spheres, making up a mesh. Using  some spatial acceleration structure, we can quickly solve for the exact intersections between the rays and the objects. 
+In traditional raytracing, a scene is often described by a set of triangles or spheres, making up a mesh. Using  some spatial acceleration structure, we can quickly solve for the exact intersections between the rays and the objects.
 
 With raymarching however, we allow for some leeway in the intersection, and accept it when a ray is *close enough* to a surface. This is done by marching along the ray at step sizes, and checking whether or not the surface is within a given threshold. We can set a limit on the number of steps to prevent marching into oblivion. In code the algorithm looks like this:
 
@@ -71,7 +69,7 @@ In the figure above the distance field is evaluated at various points along the 
 
 #### Distance estimators
 Consider a sphere centered at the origin with radius *r*. The distance from a point *p* to the sphere is given by:
-	
+
 	float distSphere(vec3 p, float radius) {
 		return length(p) - radius;
 	}
@@ -121,7 +119,7 @@ Our scene is now everything from -1 to 1 on the x- and y-axis, looking down the 
 		vec3 rd = normalize(cross(right, up));
 
 		vec4 color = vec4(0.0); // Sky color
-		
+
 		float t = 0.0;
 		const int maxSteps = 32;
 		for(int i = 0; i < maxSteps; ++i)
@@ -251,7 +249,7 @@ Be careful though, as distorting the distance field like this can cause some nas
 
 Other
 -----
-While distance fields has been a major focus of this article, raymarching itself is a general method. The main advantage is that the algorithm makes it very easy to render a variety of scenes with high level of detail. For example terrain: 
+While distance fields has been a major focus of this article, raymarching itself is a general method. The main advantage is that the algorithm makes it very easy to render a variety of scenes with high level of detail. For example terrain:
 
 Consider a heightmap describing your terrain. It could be a texture sampler uploaded to your shader, or it could be created procedurally. In order to render the terrain by raymarching, you would simply cast rays through each pixel of the image, step along the ray by some size, and stop whenever the point on the ray is lower than the terrain. The color can then be determined by perhaps making taller points white (i.e. snow) and lower points green (i.e. grass). We can shade the point by raymarching towards a lightsource.
 
@@ -284,7 +282,7 @@ References
 
 Code
 ----
-An interactive WebGL demo can be found [here](https://dl.dropboxusercontent.com/u/27844576/raymarch/raymarching.html).
+An interactive WebGL demo can be found [here](http://lightbits.github.io/toys/raymarching/raymarching.html).
 
 A Github repo for the project can be found [here](https://github.com/lightbits/ray-march). The repo contains C++ code, which runs with GLFW and OpenGL ver. 3.2. It also contains the source for the WebGL implementation inside the "webgl" subfolder.
 
